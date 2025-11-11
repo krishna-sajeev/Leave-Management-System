@@ -13,7 +13,5 @@ public interface LeaveBalanceRepo extends JpaRepository<LeaveBalance,Long> {
 
     Optional<LeaveBalance> findByUserAndLeaveType(User user, LeaveTypes leaveType);
 
-
-
-    List<LeaveBalance> findByUser_UserId(String userId);
+    List<LeaveBalance> findByUserId(Long id);
 }

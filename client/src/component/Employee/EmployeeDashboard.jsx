@@ -15,19 +15,18 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import ChatBot from "./ChatBot"; // ✅ Import chatbot
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [recentRequests, setRecentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  
 
-  const empId= localStorage.getItem("userId");
-  console.log(empId)
+  const empId = localStorage.getItem("userId");
+  const id = localStorage.getItem("id");
 
   useEffect(() => {
-    // Fetch leave balance and recent leave requests
     const fetchData = async () => {
       try {
         const [balanceRes, requestRes] = await Promise.all([
@@ -43,9 +42,7 @@ const EmployeeDashboard = () => {
       }
     };
     fetchData();
-    
-  }, []);
-
+  }, [empId]);
 
   if (loading) return <CircularProgress sx={{ mt: 10, ml: "50%" }} />;
 
@@ -135,10 +132,13 @@ const EmployeeDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* ✅ Floating Chatbot */}
+      <div style={{ position: "fixed", bottom: 20, right: 20 }}>
+        <ChatBot />
+      </div>
     </Box>
   );
 };
 
 export default EmployeeDashboard;
-
-

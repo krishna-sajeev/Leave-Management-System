@@ -15,7 +15,19 @@ import {
   Alert,
 } from "@mui/material";
 import axios from "axios";
-import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 const HRDashboard = () => {
   const [data, setData] = useState({
@@ -24,8 +36,17 @@ const HRDashboard = () => {
     departments: 0,
     leaves: [],
   });
+  const [analytics, setAnalytics] = useState({
+    totalRequests: 0,
+    avgApprovalTime: 0,
+    deptTrends: [],
+  });
   const [loading, setLoading] = useState(true);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,15 +56,54 @@ const HRDashboard = () => {
         const deptRes = await axios.get("http://localhost:8080/api/departments/count");
         const leaveRes = await axios.get("http://localhost:8080/api/leave-requests/all");
 
+        // 🔹 Compute analytics
+        const leaves = leaveRes.data;
+        const totalRequests = leaves.length;
+
+        // Average approval time calculation
+        const approvedLeaves = leaves.filter((l) => l.status === "APPROVED" && l.approvedDate);
+        const avgApprovalTime =
+          approvedLeaves.length > 0
+            ? (
+                approvedLeaves.reduce((acc, l) => {
+                  const diff =
+                    (new Date(l.approvedDate) - new Date(l.requestDate)) /
+                    (1000 * 60 * 60 * 24);
+                  return acc + diff;
+                }, 0) / approvedLeaves.length
+              ).toFixed(1)
+            : 0;
+
+        // Department-wise trends
+        const deptMap = {};
+        leaves.forEach((l) => {
+          const deptName = l.user?.deptId?.deptName || "Unknown";
+          deptMap[deptName] = (deptMap[deptName] || 0) + 1;
+        });
+        const deptTrends = Object.entries(deptMap).map(([name, value]) => ({
+          name,
+          value,
+        }));
+
         setData({
           employees: empRes.data,
           managers: mgrRes.data,
           departments: deptRes.data,
-          leaves: leaveRes.data,
+          leaves,
+        });
+
+        setAnalytics({
+          totalRequests,
+          avgApprovalTime,
+          deptTrends,
         });
       } catch (error) {
         console.error("Error loading HR dashboard:", error);
-        setSnackbar({ open: true, message: "Failed to load dashboard data!", severity: "error" });
+        setSnackbar({
+          open: true,
+          message: "Failed to load dashboard data!",
+          severity: "error",
+        });
       } finally {
         setLoading(false);
       }
@@ -53,6 +113,7 @@ const HRDashboard = () => {
 
   if (loading) return <CircularProgress sx={{ mt: 10, ml: "50%" }} />;
 
+  // Pie chart for overall status
   const pending = data.leaves.filter((r) => r.status === "PENDING").length;
   const approved = data.leaves.filter((r) => r.status === "APPROVED").length;
   const rejected = data.leaves.filter((r) => r.status === "REJECTED").length;
@@ -71,9 +132,9 @@ const HRDashboard = () => {
         HR Dashboard
       </Typography>
 
-      {/* Overview Cards */}
+      {/* Overview Section */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ backgroundColor: "#E3F2FD" }}>
             <CardContent>
               <Typography variant="h6">Total Employees</Typography>
@@ -81,7 +142,7 @@ const HRDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ backgroundColor: "#E8F5E9" }}>
             <CardContent>
               <Typography variant="h6">Total Managers</Typography>
@@ -89,7 +150,7 @@ const HRDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card sx={{ backgroundColor: "#FFF3E0" }}>
             <CardContent>
               <Typography variant="h6">Departments</Typography>
@@ -97,33 +158,74 @@ const HRDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+        <Grid item xs={12} md={3}>
+          <Card sx={{ backgroundColor: "#E1F5FE" }}>
+            <CardContent>
+              <Typography variant="h6">Total Leave Requests</Typography>
+              <Typography variant="h4">{analytics.totalRequests}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
-      {/* Chart Section */}
+      {/* Analytics Section */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" mb={2}>
+                Organization Leave Status Overview
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" mb={2}>
+                Department-wise Leave Trends
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.deptTrends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#42A5F5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Average Approval Time */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
-          <Typography variant="h6" mb={2}>
-            Organization Leave Status Overview
+          <Typography variant="h6">Average Approval Time</Typography>
+          <Typography variant="h4" color="primary">
+            {analytics.avgApprovalTime} days
           </Typography>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
         </CardContent>
       </Card>
 
@@ -148,7 +250,7 @@ const HRDashboard = () => {
               {data.leaves.slice(0, 5).map((req) => (
                 <TableRow key={req.leaveRequestId}>
                   <TableCell>{req.user?.fullName}</TableCell>
-                  <TableCell>{req.user?.deptId}</TableCell>
+                  <TableCell>{req.user?.deptId?.deptName}</TableCell>
                   <TableCell>{req.leaveType?.typeName}</TableCell>
                   <TableCell>{req.startDate}</TableCell>
                   <TableCell>{req.endDate}</TableCell>

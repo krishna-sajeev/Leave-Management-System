@@ -20,6 +20,7 @@ public class LeaveApproval {
     @JoinColumn(name = "approver_id", referencedColumnName = "user_id")
     private User approver;
 
+    @Enumerated(EnumType.STRING)
     private Action action;
 
 

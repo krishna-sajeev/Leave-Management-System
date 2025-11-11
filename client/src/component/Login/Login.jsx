@@ -54,15 +54,15 @@ if (roles === "EMPLOYEE") {
         <CssBaseline />
         <Sheet
           sx={{
-            width: 300,
+            width: 600,
             mx: 'auto',
-            my: 4,
+            my: 16,
             py: 3,
             px: 2,
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
-            borderRadius: 'sm',
+            borderRadius: 'md',
             boxShadow: 'md',
           }}
           variant="outlined"

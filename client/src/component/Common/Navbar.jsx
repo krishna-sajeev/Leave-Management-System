@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
-import Badge from "@mui/material/Badge";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+  Button,
+  Tooltip,
+  Badge,
+  useMediaQuery,
+} from "@mui/material";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircle from "@mui/icons-material/AccountCircle";
@@ -22,9 +25,7 @@ const Navbar = () => {
   const [role, setRole] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-
-  // ✅ Hide Navbar completely on login page
-  if (location.pathname === "/login") return null;
+  const isMobile = useMediaQuery("(max-width:768px)");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -33,12 +34,13 @@ const Navbar = () => {
     setRole(userRole);
   }, [location.pathname]);
 
-  // ✅ Role-based menu items
+  // ✅ Role-based navigation
   const pages =
     role === "EMPLOYEE"
       ? [
           { name: "Dashboard", path: "/employee-dashboard" },
           { name: "Apply Leave", path: "/leave-request" },
+          { name: "Holiday Calendar", path: "/holidays" },
         ]
       : role === "MANAGER"
       ? [
@@ -51,29 +53,18 @@ const Navbar = () => {
           { name: "User Management", path: "/user-manage" },
           { name: "Holiday Management", path: "/holiday-manage" },
           { name: "Policies", path: "/policy-manage" },
+          { name: "Department", path:"/department-manage" },
         ]
       : [];
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
+  const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
+  const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleNavigate = (path) => {
     navigate(path);
     setAnchorElNav(null);
   };
-
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
+  const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
+  const handleCloseUserMenu = () => setAnchorElUser(null);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -81,74 +72,91 @@ const Navbar = () => {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#1565c0" }}>
-      <Toolbar>
-        {/* ===== Left side logo ===== */}
+    <AppBar
+      position="static"
+      sx={{
+        background: "linear-gradient(90deg, #1565c0 0%, #00bfa5 50%, #8e24aa 100%)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+      }}
+    >
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        {/* ===== Logo / Title ===== */}
         <Typography
           variant="h6"
           noWrap
           component="div"
-          sx={{ mr: 2, cursor: "pointer" }}
+          sx={{
+            mr: 2,
+            cursor: "pointer",
+            fontWeight: "bold",
+            letterSpacing: "0.5px",
+            background: "linear-gradient(to right, #fff, #c8e6c9)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
           onClick={() => navigate("/")}
         >
           Leave Management
         </Typography>
 
-        {/* ===== Mobile Menu ===== */}
-        <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-          <IconButton
-            size="large"
-            aria-label="menu"
-            onClick={handleOpenNavMenu}
-            color="inherit"
-          >
-            <MenuIcon />
-          </IconButton>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorElNav}
-            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-            keepMounted
-            transformOrigin={{ vertical: "top", horizontal: "left" }}
-            open={Boolean(anchorElNav)}
-            onClose={handleCloseNavMenu}
-            sx={{ display: { xs: "block", md: "none" } }}
-          >
-            {pages.map((page) => (
-              <MenuItem key={page.name} onClick={() => handleNavigate(page.path)}>
-                <Typography textAlign="center">{page.name}</Typography>
-              </MenuItem>
-            ))}
-          </Menu>
-        </Box>
-
-        {/* ===== Desktop Menu ===== */}
-        <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-          {pages.map((page) => (
-            <Button
-              key={page.name}
-              onClick={() => handleNavigate(page.path)}
-              sx={{ my: 2, color: "white", display: "block" }}
+        
+        {isMobile && isLoggedIn && (
+          <Box>
+            <IconButton
+              size="large"
+              color="inherit"
+              onClick={handleOpenNavMenu}
             >
-              {page.name}
-            </Button>
-          ))}
-        </Box>
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              open={Boolean(anchorElNav)}
+              onClose={handleCloseNavMenu}
+              sx={{ display: { md: "none" } }}
+            >
+              {pages.map((page) => (
+                <MenuItem key={page.name} onClick={() => handleNavigate(page.path)}>
+                  <Typography textAlign="center">{page.name}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        )}
 
-        {/* ===== Icons only after login ===== */}
-        {isLoggedIn && (
+     
+        {!isMobile && isLoggedIn && (
+          <Box sx={{ flexGrow: 1, display: "flex", gap: 2 }}>
+            {pages.map((page) => (
+              <Button
+                key={page.name}
+                onClick={() => handleNavigate(page.path)}
+                sx={{
+                  my: 1,
+                  color: "white",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
+                {page.name}
+              </Button>
+            ))}
+          </Box>
+        )}
+
+  
+        {isLoggedIn ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton size="large" color="inherit">
-              <Badge badgeContent={4} color="error">
-                <MailIcon />
-              </Badge>
-            </IconButton>
-            <IconButton size="large" color="inherit">
-              <Badge badgeContent={3} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <Tooltip title="Open settings">
+            
+            <Tooltip title="Account Settings">
               <IconButton onClick={handleOpenUserMenu} color="inherit">
                 <AccountCircle />
               </IconButton>
@@ -166,6 +174,27 @@ const Navbar = () => {
               <MenuItem onClick={() => navigate("/profile")}>Profile</MenuItem>
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
             </Menu>
+          </Box>
+        ) : (
+      
+          <Box sx={{ flexGrow: 1, textAlign: "right" }}>
+            <Button
+              onClick={() => navigate("/login")}
+              sx={{
+                color: "white",
+                fontWeight: "bold",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderRadius: 2,
+                px: 2,
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.3)",
+                  transform: "scale(1.05)",
+                },
+                transition: "all 0.3s ease",
+              }}
+            >
+              Login
+            </Button>
           </Box>
         )}
       </Toolbar>

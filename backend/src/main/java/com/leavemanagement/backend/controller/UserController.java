@@ -15,10 +15,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
@@ -26,7 +23,10 @@ import java.util.Optional;
 public class UserController {
 
     @Autowired
-    UserRepository repo;
+    private UserRepository repo;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -34,138 +34,175 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private DepartmentRepository departmentRepository;
-
+    private Department department;
 
     private final Map<String, String> otpStore = new HashMap<>();
 
-
-    @PostMapping("/add")
-    public ResponseEntity<?> register(@RequestBody User inputMap) {
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody User input) {
         try {
-            String email = inputMap.getEmail();
-            String password = inputMap.getPassword();
-            Department deptId = inputMap.getDeptId();
-            String fullName = inputMap.getFullName();
-            User.Role role = inputMap.getRole();
-            String mobileNumber = inputMap.getMobileNumber();
-            LocalDate joiningDate = inputMap.getJoiningDate();
-
-
-            if (email == null || password == null) {
-                return ResponseEntity.badRequest().body(Map.of("status", "Missing required fields"));
-            }
-
-            if (repo.existsByEmail(email)) {
+            // 🔹 Prevent duplicate email registration
+            if (repo.existsByEmail(input.getEmail())) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("status", "User already registered with this email"));
+                        .body(Map.of("status", "error", "message", "Email already registered"));
             }
 
-            Department department = departmentRepository.findByDeptId(deptId.getDeptId())
+            // 🔹 Validate Department
+            Department department = departmentRepository.findByDeptId(input.getDeptId().getDeptId())
                     .orElseThrow(() -> new RuntimeException("Department not found"));
 
-            User user = new User();
-            user.setEmail(email);
-            user.setPassword(password);
-            user.setFullName(fullName);
-            user.setDeptId(department);
-            user.setJoiningDate(joiningDate);
-            user.setMobileNumber(mobileNumber);
-            user.setRole(role);
+            // 🔹 Default password handling
+            String defaultPassword = (input.getPassword() == null || input.getPassword().isBlank())
+                    ? "Secret@123"
+                    : input.getPassword();
 
-
+            // 🔹 Hash + salt password
             String salt = SaltUtil.generateSalt(16);
-            String hashed = PasswordUtil.hashWithSHA256(password, salt);
-            user.setSalt(salt);
-            user.setPassword(hashed);
+            String hashedPassword = PasswordUtil.hashWithSHA256(defaultPassword, salt);
 
-            User saved = repo.save(user);
+            input.setSalt(salt);
+            input.setPassword(hashedPassword);
+            input.setDeptId(department);
+
+            // 🔹 Save to DB
+            User saved = repo.save(input);
             saved.setUserId("EMP" + (saved.getId() + 10));
             repo.save(saved);
 
-            return ResponseEntity.ok(Map.of("status", "success", "user", saved));
+            if (saved.getRole() == User.Role.MANAGER) {
+                department.setManagerId(saved.getUserId());
+                departmentRepository.save(department);
+            }
+            // 🔹 Send email
+            try {
+                sendUserCreationMail(saved.getEmail(), saved.getFullName(), saved.getUserId());
+            } catch (Exception mailEx) {
+                mailEx.printStackTrace();
+                System.err.println("Warning: Email sending failed for " + saved.getEmail());
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "User created and email sent successfully",
+                    "user", saved));
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
-                    "status", "Registration failed",
+                    "status", "error",
+                    "message", "User creation failed",
                     "error", e.getMessage()
             ));
         }
     }
+
+    // ✅ Private helper method to send mail
+    private void sendUserCreationMail(String to, String fullName, String userId) {
+        String subject = "Welcome to Leave Management System 🎉";
+        String body = String.format(
+                "Hi %s,\n\n" +
+                        "Your user account has been successfully created.\n\n" +
+                        "🆔 User ID: %s\n" +
+                        "📧 Login Email: %s\n" +
+                        "🔑 Temporary Password: Secret@123\n\n" +
+                        "Please change your password after logging in for the first time.\n\n" +
+                        "Regards,\nLeave Management HR Team",
+                fullName, userId, to
+        );
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+
+        mailSender.send(message);
+        System.out.println("✅ Mail sent successfully to " + to);
+    }
+
+
+
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = repo.findAll();
+        return ResponseEntity.ok(users);
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+        return repo.findById(id)
+                .map(existing -> {
+                    existing.setFullName(updatedUser.getFullName());
+                    existing.setEmail(updatedUser.getEmail());
+                    existing.setMobileNumber(updatedUser.getMobileNumber());
+                    existing.setRole(updatedUser.getRole());
+                    existing.setJoiningDate(updatedUser.getJoiningDate());
+
+                    if (updatedUser.getDeptId() != null) {
+                        Department dept = departmentRepository.findByDeptId(updatedUser.getDeptId().getDeptId())
+                                .orElseThrow(() -> new RuntimeException("Department not found"));
+                        existing.setDeptId(dept);
+                    }
+
+                    repo.save(existing);
+                    return ResponseEntity.ok(Map.of("status", "success", "user", existing));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("status", "error", "message", "User not found")));
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        if (!repo.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("status", "error", "message", "User not found"));
+        }
+        repo.deleteById(id);
+        return ResponseEntity.ok(Map.of("status", "success", "message", "User deleted successfully"));
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User input) {
         try {
             if (input.getEmail() == null || input.getPassword() == null) {
                 return ResponseEntity.badRequest().body(
-                        Map.of("status", "error", "message", "Missing login fields")
-                );
+                        Map.of("status", "error", "message", "Missing login fields"));
             }
 
             Optional<User> userOpt = repo.findByEmail(input.getEmail());
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(401).body(
-                        Map.of("status", "error", "message", "Invalid credentials")
-                );
+                return ResponseEntity.status(401).body(Map.of("status", "error", "message", "Invalid credentials"));
             }
 
-            User userFromDb = userOpt.get();
-            String enteredHashed = PasswordUtil.hashWithSHA256(input.getPassword(), userFromDb.getSalt());
-            if (!enteredHashed.equals(userFromDb.getPassword())) {
-                return ResponseEntity.status(401).body(
-                        Map.of("status", "error", "message", "Invalid credentials")
-                );
-
+            User user = userOpt.get();
+            String enteredHashed = PasswordUtil.hashWithSHA256(input.getPassword(), user.getSalt());
+            if (!enteredHashed.equals(user.getPassword())) {
+                return ResponseEntity.status(401).body(Map.of("status", "error", "message", "Invalid credentials"));
             }
 
-            String token = jwtUtil.generateToken(userFromDb.getEmail(), userFromDb.getRole());
-            if (token == null) {
-                return ResponseEntity.status(500).body(
-                        Map.of("status", "error", "message", "Token generation failed")
-                );
-            }
-
-            // ✅ Success response
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
             response.put("token", token);
             response.put("user", Map.of(
-                    "userId", userFromDb.getUserId(),
-                    "fullName", userFromDb.getFullName(),
-                    "email", userFromDb.getEmail(),
-                    "role", userFromDb.getRole().name() // ensure it's string
+                    "userId", user.getUserId(),
+                    "fullName", user.getFullName(),
+                    "email", user.getEmail(),
+                    "role", user.getRole().name()
             ));
-
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(
-                    Map.of("status", "error", "message", "Login failed", "error", e.getMessage())
-            );
+            return ResponseEntity.status(500).body(Map.of(
+                    "status", "error", "message", "Login failed", "error", e.getMessage()));
         }
     }
-    @DeleteMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        repo.deleteById(id);
-        return "User deleted successfully with ID: " + id;
-    }
-    @PutMapping("/edit/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        return repo.findById(id)
-                .map(existingUser -> {
-                    existingUser.setFullName(updatedUser.getFullName());
-                    existingUser.setEmail(updatedUser.getEmail());
-                    existingUser.setDeptId(updatedUser.getDeptId());
-                    existingUser.setRole(updatedUser.getRole());
 
-                    return repo.save(existingUser);
-                })
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-    }
+
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> req) {
         String email = req.get("email");
@@ -174,19 +211,19 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("message", "Email not registered"));
         }
 
-        // Generate OTP
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
         otpStore.put(email, otp);
 
-        // Send mail
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(email);
         msg.setSubject("Your OTP Code");
         msg.setText("Your OTP is: " + otp);
         mailSender.send(msg);
 
-        return ResponseEntity.ok(Map.of("message", "OTP sent to email"));
+        return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
     }
+
+    //  RESET PASSWORD
     @PostMapping("/forgot-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
         String email = req.get("email");
@@ -198,7 +235,6 @@ public class UserController {
         }
 
         User user = repo.findByEmail(email).orElseThrow();
-        user.setPassword(newPassword);
         String salt = SaltUtil.generateSalt(16);
         String hashed = PasswordUtil.hashWithSHA256(newPassword, salt);
         user.setSalt(salt);
@@ -209,29 +245,14 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
-
+    //  ROLE COUNT ENDPOINTS
     @GetMapping("/employee/count")
-    public Long getAllEmployee() {
-        return repo.findByRole(User.Role.EMPLOYEE)
-                .stream()
-                .count();
+    public Long getEmployeeCount() {
+        return repo.findByRole(User.Role.EMPLOYEE).stream().count();
     }
 
     @GetMapping("/manager/count")
-    public Long getAllManager() {
-        return repo.findByRole(User.Role.MANAGER)
-                .stream()
-                .count();
+    public Long getManagerCount() {
+        return repo.findByRole(User.Role.MANAGER).stream().count();
     }
-
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = repo.findAll();
-        return ResponseEntity.ok(users);
-    }
-
-
-
-
-
 }

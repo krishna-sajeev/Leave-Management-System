@@ -1,133 +1,258 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
 import {
-  Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, IconButton, Tooltip, Snackbar, Alert, FormControl, MenuItem, Select, InputLabel
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add, Edit, Delete } from '@mui/icons-material';
-
-const API_BASE_URL = "http://localhost:8080/api/users";
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  TextField,
+  MenuItem,
+  Typography,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
+import { Edit, Delete } from "@mui/icons-material";
+import axios from "axios";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [open, setOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({ fullName:'', email:'', role:'', deptId:'', mobileNumber:'', joiningDate:'' });
-  const [alert, setAlert] = useState({ open:false, message:'', severity:'success' });
-
-  useEffect(() => { fetchUsers(); }, []);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState({
+    userId: "",
+    fullName: "",
+    email: "",
+    mobileNumber: "",
+    password: "",
+    joiningDate: "",
+    deptId: "",
+    role: "",
+  });
 
   const fetchUsers = async () => {
-    try { 
-      const res = await axios.get(API_BASE_URL);
-      setUsers(res.data);
-    } catch(err) {
-      setAlert({ open:true, message:"Failed to load users", severity:"error" });
-    }
+    const res = await axios.get("http://localhost:8080/api/users");
+    setUsers(res.data);
   };
 
-  const handleSaveUser = async () => {
-    try {
-      const payload = { ...formData, deptId: { deptId: formData.deptId } };
-      if(editingUser) await axios.put(`${API_BASE_URL}/edit/${editingUser.id}`, payload);
-      else await axios.post(`${API_BASE_URL}/add`, payload);
-
-      setOpen(false); setEditingUser(null);
-      setFormData({ fullName:'', email:'', role:'', deptId:'', mobileNumber:'', joiningDate:'' });
-      fetchUsers();
-      setAlert({ open:true, message:"Saved successfully", severity:"success" });
-    } catch(err) {
-      setAlert({ open:true, message:"Save failed", severity:"error" });
-    }
+  const fetchDepartments = async () => {
+    const res = await axios.get("http://localhost:8080/api/departments/dept");
+    setDepartments(res.data);
   };
 
-  const handleDeleteUser = async (id) => {
-    if(!window.confirm("Delete user?")) return;
-    try { 
-      await axios.delete(`${API_BASE_URL}/delete/${id}`);
-      fetchUsers();
-      setAlert({ open:true, message:"Deleted successfully", severity:"success" });
-    } catch(err) { setAlert({ open:true, message:"Delete failed", severity:"error" }); }
-  };
+  useEffect(() => {
+    fetchUsers();
+    fetchDepartments();
+  }, []);
 
-  const handleEditUser = (user) => {
-    setEditingUser(user);
-    setFormData({
-      fullName: user.fullName || '',
-      email: user.email || '',
-      role: user.role || '',
-      deptId: user.deptId?.dept_id || '',
-      mobileNumber: user.mobileNumber || '',
-      joiningDate: user.joiningDate || ''
-    });
+  const handleOpen = (user = null) => {
+    setEditMode(!!user);
+    setForm(
+      user
+        ? {
+            ...user,
+            deptId: user.deptId?.deptId || "",
+          }
+        : {
+            userId: "",
+            fullName: "",
+            email: "",
+            mobileNumber: "",
+            password: "",
+            joiningDate: "",
+            deptId: "",
+            role: "",
+          }
+    );
     setOpen(true);
   };
 
-  const columns = [
-  { field:'fullName', headerName:'Name', flex:1 },
-  { field:'email', headerName:'Email', flex:1 },
-  { field:'role', headerName:'Role', flex:1 },
-  { field:'mobileNumber', headerName:'Mobile', flex:1 },
-  { 
-    field:'joiningDate', 
-    headerName:'Joining Date', 
-    flex:1, 
-   },
-  { 
-    field:'deptId', 
-    headerName:'Department', 
-    flex:1, 
-     },
-  {
-    field:'actions', headerName:'Actions', flex:1, renderCell: (params) => (
-      <>
-        <Tooltip title="Edit">
-          <IconButton onClick={() => handleEditUser(params.row)}><Edit /></IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton onClick={() => handleDeleteUser(params.row.id)}><Delete /></IconButton>
-        </Tooltip>
-      </>
-    )
-  }
-];
+  const handleClose = () => setOpen(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSave = async () => {
+    const payload = {
+      ...form,
+      deptId: { deptId: form.deptId }, // backend expects object
+    };
+
+    if (editMode) {
+      await axios.put(
+        `http://localhost:8080/api/users/${form.id}`,
+        payload
+      );
+    } else {
+      await axios.post("http://localhost:8080/api/users", payload);
+    }
+
+    fetchUsers();
+    handleClose();
+  };
+
+  const handleDelete = async (id) => {
+    await axios.delete(`http://localhost:8080/api/users/${id}`);
+    fetchUsers();
+  };
 
   return (
-    <Box sx={{ p:4 }}>
-      <Typography variant="h5" gutterBottom>User Management</Typography>
-      <Button variant="contained" startIcon={<Add />} onClick={()=>{setEditingUser(null); setFormData({ fullName:'', email:'', role:'', deptId:'', mobileNumber:'', joiningDate:'' }); setOpen(true);}}>Add User</Button>
-      
-      <Box sx={{ height:400, mt:2 }}>
-        <DataGrid rows={users} columns={columns} pageSize={5} getRowId={row => row.id || row.userId} />
-      </Box>
+    <Box p={3}>
+      <Card sx={{ boxShadow: 3, borderRadius: 3 }}>
+        <CardContent>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography variant="h5" fontWeight="bold">
+              👥 User Management
+            </Typography>
+            <Button variant="contained" onClick={() => handleOpen()}>
+              + Add User
+            </Button>
+          </Grid>
 
-      <Dialog open={open} onClose={()=>setOpen(false)}>
-        <DialogTitle>{editingUser ? "Edit User":"Add User"}</DialogTitle>
-        <DialogContent sx={{ display:'flex', flexDirection:'column', gap:2, mt:1 }}>
-          <TextField label="Name" value={formData.fullName} onChange={(e)=>setFormData({...formData, fullName:e.target.value})} />
-          <TextField label="Email" value={formData.email} onChange={(e)=>setFormData({...formData, email:e.target.value})} />
-          <FormControl fullWidth>
-            <InputLabel>Role</InputLabel>
-            <Select value={formData.role} onChange={(e)=>setFormData({...formData, role:e.target.value})}>
-              <MenuItem value="HR">HR</MenuItem>
-              <MenuItem value="EMPLOYEE">EMPLOYEE</MenuItem>
-              <MenuItem value="MANAGER">MANAGER</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField label="Department ID" value={formData.deptId} onChange={(e)=>setFormData({...formData, deptId:e.target.value})} />
-          <TextField label="Mobile Number" value={formData.mobileNumber} onChange={(e)=>setFormData({...formData, mobileNumber:e.target.value})} />
-          <TextField label="Joining Date" type="date" value={formData.joiningDate} onChange={(e)=>setFormData({...formData, joiningDate:e.target.value})} InputLabelProps={{shrink:true}} />
+          <Table sx={{ mt: 3 }}>
+            <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+              <TableRow>
+                <TableCell><b>User ID</b></TableCell>
+                <TableCell><b>Name</b></TableCell>
+                <TableCell><b>Email</b></TableCell>
+                <TableCell><b>Mobile</b></TableCell>
+                <TableCell><b>Department</b></TableCell>
+                <TableCell><b>Role</b></TableCell>
+                <TableCell><b>Actions</b></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.userId}</TableCell>
+                  <TableCell>{user.fullName}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.mobileNumber}</TableCell>
+                  <TableCell>{user.deptId?.deptName}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <IconButton color="primary" onClick={() => handleOpen(user)}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton
+                      color="error"
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Dialog for Add/Edit */}
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>{editMode ? "Edit User" : "Add User"}</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} mt={1}>
+          
+            <Grid item xs={6}>
+              <TextField
+                label="Full Name"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Mobile Number"
+                name="mobileNumber"
+                value={form.mobileNumber}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+            {!editMode && (
+              <Grid item xs={6}>
+                <TextField
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  fullWidth
+                />
+              </Grid>
+            )}
+            <Grid item xs={6}>
+              <TextField
+                label="Joining Date"
+                name="joiningDate"
+                type="date"
+                value={form.joiningDate}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                select
+                label="Department"
+                name="deptId"
+                value={form.deptId}
+                onChange={handleChange}
+                fullWidth
+              >
+                {departments.map((d) => (
+                  <MenuItem key={d.deptId} value={d.deptId}>
+                    {d.deptName}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                select
+                label="Role"
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                fullWidth
+              >
+                <MenuItem value="HR">HR</MenuItem>
+                <MenuItem value="EMPLOYEE">Employee</MenuItem>
+                <MenuItem value="MANAGER">Manager</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={()=>setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveUser}>Save</Button>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>
+            {editMode ? "Update" : "Save"}
+          </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar open={alert.open} autoHideDuration={3000} onClose={()=>setAlert({...alert, open:false})} anchorOrigin={{vertical:'bottom', horizontal:'center'}}>
-        <Alert severity={alert.severity}>{alert.message}</Alert>
-      </Snackbar>
     </Box>
   );
 };

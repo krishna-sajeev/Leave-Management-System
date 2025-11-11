@@ -29,11 +29,20 @@
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -67,24 +76,9 @@
 			<version>2.0.30</version>
 		</dependency>
 
-		<!-- (Optional) For converting DOCX → PDF using docx4j -->
-		<dependency>
-			<groupId>org.docx4j</groupId>
-			<artifactId>docx4j-export-fo</artifactId>
-			<version>11.4.10</version>
-		</dependency>
-		<!-- For docx to PDF conversion -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.5</version>
-		</dependency>
 
-		<dependency>
-			<groupId>fr.opensagres.xdocreport</groupId>
-			<artifactId>xdocreport</artifactId>
-			<version>2.0.2</version>
-		</dependency>
+
+
 
 		<dependency>
 			<groupId>com.auth0</groupId>

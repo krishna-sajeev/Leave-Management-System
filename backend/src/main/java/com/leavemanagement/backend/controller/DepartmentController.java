@@ -18,7 +18,7 @@ public class DepartmentController {
     @Autowired
     private DepartmentRepository departmentRepository;
 
-    // ✅ 1. Create new Department
+    //  1. Create new Department
     @PostMapping
     public ResponseEntity<Department> createDepartment(@RequestBody Department department) {
         Department savedDepartment = departmentRepository.save(department);
