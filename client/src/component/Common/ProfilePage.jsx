@@ -35,7 +35,7 @@ const ProfilePage = () => {
   useEffect(() => {
     if (userId) {
       axios
-        .get(`http://localhost:8080/api/profile/${userId}`)
+        .get(`http://3.106.220.39:8080/api/profile/${userId}`)
         .then((res) => setProfile(res.data))
         .catch((err) => console.error(err));
     }

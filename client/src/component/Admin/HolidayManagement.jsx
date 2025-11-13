@@ -32,7 +32,7 @@ const HolidayManagement = () => {
   });
 
   const fetchHolidays = async () => {
-    const res = await axios.get("http://localhost:8080/api/holidays");
+    const res = await axios.get("http://3.106.220.39:8080/api/holidays");
     setHolidays(res.data);
   };
 
@@ -42,9 +42,9 @@ const HolidayManagement = () => {
 
   const handleSave = async () => {
     if (editingHoliday) {
-      await axios.put(`http://localhost:8080/api/holidays/${editingHoliday.id}`, formData);
+      await axios.put(`http://3.106.220.39:8080/api/holidays/${editingHoliday.id}`, formData);
     } else {
-      await axios.post("http://localhost:8080/api/holidays", formData);
+      await axios.post("http://3.106.220.39:8080/api/holidays", formData);
     }
     setOpen(false);
     fetchHolidays();
@@ -59,7 +59,7 @@ const HolidayManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:8080/api/holidays/${id}`);
+    await axios.delete(`http://3.106.220.39:8080/api/holidays/${id}`);
     fetchHolidays();
   };
 

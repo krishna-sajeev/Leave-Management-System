@@ -42,7 +42,7 @@ const ChatBot = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:8080/api/chat?message=${encodeURIComponent(
+        `http://3.106.220.39:8080/api/chat?message=${encodeURIComponent(
           message
         )}&userId=${userId}`
       );

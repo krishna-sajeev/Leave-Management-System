@@ -38,7 +38,7 @@ const DepartmentManagement = () => {
   // ✅ Fetch departments
   const fetchDepartments = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/departments/dept");
+      const res = await axios.get("http://3.106.220.39:8080/api/departments/dept");
       setDepartments(res.data);
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -48,7 +48,7 @@ const DepartmentManagement = () => {
   // ✅ Fetch all MANAGER users
   const fetchManagers = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/users");
+      const res = await axios.get("http://3.106.220.39:8080/api/users");
       const managerList = res.data.filter((u) => u.role === "MANAGER");
       setManagers(managerList);
     } catch (error) {
@@ -82,11 +82,11 @@ const DepartmentManagement = () => {
     try {
       if (editMode) {
         await axios.put(
-          `http://localhost:8080/api/departments/${form.id}`,
+          `http://3.106.220.39:8080/api/departments/${form.id}`,
           form
         );
       } else {
-        await axios.post("http://localhost:8080/api/departments", form);
+        await axios.post("http://3.106.220.39:8080/api/departments", form);
       }
       fetchDepartments();
       handleClose();
@@ -98,7 +98,7 @@ const DepartmentManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this department?")) {
       try {
-        await axios.delete(`http://localhost:8080/api/departments/${id}`);
+        await axios.delete(`http://3.106.220.39:8080/api/departments/${id}`);
         fetchDepartments();
       } catch (error) {
         console.error("Error deleting department:", error);

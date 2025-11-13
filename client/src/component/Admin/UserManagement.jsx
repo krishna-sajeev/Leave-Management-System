@@ -39,12 +39,12 @@ const UserManagement = () => {
   });
 
   const fetchUsers = async () => {
-    const res = await axios.get("http://localhost:8080/api/users");
+    const res = await axios.get("http://3.106.220.39:8080/api/users");
     setUsers(res.data);
   };
 
   const fetchDepartments = async () => {
-    const res = await axios.get("http://localhost:8080/api/departments/dept");
+    const res = await axios.get("http://3.106.220.39:8080/api/departments/dept");
     setDepartments(res.data);
   };
 
@@ -90,11 +90,11 @@ const UserManagement = () => {
 
     if (editMode) {
       await axios.put(
-        `http://localhost:8080/api/users/${form.id}`,
+        `http://3.106.220.39:8080/api/users/${form.id}`,
         payload
       );
     } else {
-      await axios.post("http://localhost:8080/api/users", payload);
+      await axios.post("http://3.106.220.39:8080/api/users", payload);
     }
 
     fetchUsers();
@@ -102,7 +102,7 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:8080/api/users/${id}`);
+    await axios.delete(`http://3.106.220.39:8080/api/users/${id}`);
     fetchUsers();
   };
 

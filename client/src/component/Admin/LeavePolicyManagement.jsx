@@ -32,8 +32,8 @@ const LeavePolicyManagement = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null });
 
-  const API_URL = "http://localhost:8080/api/leave-types";
-  const ADD_URL = "http://localhost:8080/api/addleave-types";
+  const API_URL = "http://3.106.220.39:8080/api/leave-types";
+  const ADD_URL = "http://3.106.220.39:8080/api/addleave-types";
 
   // Load all leave types
   const fetchLeaveTypes = async () => {

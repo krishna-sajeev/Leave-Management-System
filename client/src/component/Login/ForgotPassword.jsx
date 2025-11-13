@@ -24,7 +24,7 @@ const ForgotPassword = () => {
     setError("");
     setSuccess("");
     try {
-      const res = await axios.post("http://localhost:8080/api/users/send-otp", {
+      const res = await axios.post("http://3.106.220.39:8080/api/users/send-otp", {
         email: form.email,
       });
       setSuccess(res.data.message);
@@ -44,7 +44,7 @@ const ForgotPassword = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:8080/api/users/forgot-password", {
+      const res = await axios.post("http://3.106.220.39:8080/api/users/forgot-password", {
         email: form.email,
         otp: form.otp,
         newPassword: form.newPassword,

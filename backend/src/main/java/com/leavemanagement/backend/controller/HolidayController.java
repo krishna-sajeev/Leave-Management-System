@@ -72,7 +72,7 @@ public class HolidayController {
 
         return leaves.stream().map(l -> {
             Map<String, Object> map = new HashMap<>();
-            map.put("title", l.getUser().getFullName() + " (" + l.getLeaveType() + ")");
+            map.put("title", l.getUser().getFullName() + " (" + l.getLeaveType().getTypeName() + ")");
             map.put("start", l.getStartDate().toString());
             map.put("end", l.getEndDate().toString());
             map.put("status", l.getStatus());

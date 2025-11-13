@@ -30,8 +30,8 @@ const EmployeeDashboard = () => {
     const fetchData = async () => {
       try {
         const [balanceRes, requestRes] = await Promise.all([
-          axios.get(`http://localhost:8080/api/leave-balance/user/${empId}`),
-          axios.get(`http://localhost:8080/api/leave-requests/user/${empId}`),
+          axios.get(`http://3.106.220.39:8080/api/leave-balance/user/${empId}`),
+          axios.get(`http://3.106.220.39:8080/api/leave-requests/user/${empId}`),
         ]);
         setLeaveBalance(balanceRes.data);
         setRecentRequests(requestRes.data);

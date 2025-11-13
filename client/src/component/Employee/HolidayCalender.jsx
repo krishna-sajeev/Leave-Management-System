@@ -23,7 +23,7 @@ const HolidayCalendar = () => {
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/holidays");
+        const res = await axios.get("http://3.106.220.39:8080/api/holidays");
         setHolidays(res.data);
         setFiltered(res.data);
       } catch (error) {

@@ -33,7 +33,7 @@ const LeaveRequest = () => {
   // ✅ Fetch Leave Types
   useEffect(() => {
     axios
-      .get("http://localhost:8080/api/leave-types")
+      .get("http://3.106.220.39:8080/api/leave-types")
       .then((res) => setLeaveTypes(res.data))
       .catch((err) => console.error("Error fetching leave types:", err));
   }, []);
@@ -42,7 +42,7 @@ const LeaveRequest = () => {
   useEffect(() => {
     if (!userId) return; // safety check
     axios
-      .get(`http://localhost:8080/api/leave-requests/user/${userId}`)
+      .get(`http://3.106.220.39:8080/api/leave-requests/user/${userId}`)
       .then((res) => setLeaveRequests(res.data))
       .catch((err) => console.error("Error fetching leave requests:", err));
   }, [userId]);
@@ -52,7 +52,7 @@ const LeaveRequest = () => {
     e.preventDefault();
 
     axios
-      .post("http://localhost:8080/api/leave-requests/apply", formData)
+      .post("http://3.106.220.39:8080/api/leave-requests/apply", formData)
       .then(() => {
         alert("Leave request submitted successfully!");
         setFormData({

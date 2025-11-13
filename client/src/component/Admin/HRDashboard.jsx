@@ -51,10 +51,10 @@ const HRDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const empRes = await axios.get("http://localhost:8080/api/users/employee/count");
-        const mgrRes = await axios.get("http://localhost:8080/api/users/manager/count");
-        const deptRes = await axios.get("http://localhost:8080/api/departments/count");
-        const leaveRes = await axios.get("http://localhost:8080/api/leave-requests/all");
+        const empRes = await axios.get("http://3.106.220.39:8080/api/users/employee/count");
+        const mgrRes = await axios.get("http://3.106.220.39:8080/api/users/manager/count");
+        const deptRes = await axios.get("http://3.106.220.39:8080/api/departments/count");
+        const leaveRes = await axios.get("http://3.106.220.39:8080/api/leave-requests/all");
 
         // 🔹 Compute analytics
         const leaves = leaveRes.data;
