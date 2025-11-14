@@ -18,7 +18,7 @@ import {
 import axios from "axios";
 
 const LeaveRequest = () => {
-  const userId = localStorage.getItem("userId"); // ✅ Define userId once
+  const userId = localStorage.getItem("userId"); //  Define userId once
 
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -27,7 +27,7 @@ const LeaveRequest = () => {
     startDate: "",
     endDate: "",
     reason: "",
-    user: { userId }, // ✅ userId reference fixed
+    user: { userId }, //  userId reference fixed
   });
 
   //  Fetch Leave Types
@@ -73,7 +73,7 @@ const LeaveRequest = () => {
         Leave Request
       </Typography>
 
-      {/* 📝 Apply for Leave Section */}
+      {/*  Apply for Leave Section */}
       <Card sx={{ mb: 4, boxShadow: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
@@ -153,7 +153,7 @@ const LeaveRequest = () => {
         </CardContent>
       </Card>
 
-      {/* 📋 Leave Request History */}
+      {/*  Leave Request History */}
       <Card component={Paper} sx={{ boxShadow: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>

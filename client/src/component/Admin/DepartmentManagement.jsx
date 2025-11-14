@@ -35,7 +35,7 @@ const DepartmentManagement = () => {
     managerId: "",
   });
 
-  // ✅ Fetch departments
+  // Fetch departments
   const fetchDepartments = async () => {
     try {
       const res = await axios.get("http://3.106.220.39:8080/api/departments/dept");
@@ -45,7 +45,7 @@ const DepartmentManagement = () => {
     }
   };
 
-  // ✅ Fetch all MANAGER users
+  //  Fetch all MANAGER users
   const fetchManagers = async () => {
     try {
       const res = await axios.get("http://3.106.220.39:8080/api/users");

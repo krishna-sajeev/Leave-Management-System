@@ -133,7 +133,7 @@ const EmployeeDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* ✅ Floating Chatbot */}
+      {/*  Floating Chatbot */}
       <div style={{ position: "fixed", bottom: 20, right: 20 }}>
         <ChatBot />
       </div>
