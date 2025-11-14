@@ -30,7 +30,7 @@ const LeaveRequest = () => {
     user: { userId }, // ✅ userId reference fixed
   });
 
-  // ✅ Fetch Leave Types
+  //  Fetch Leave Types
   useEffect(() => {
     axios
       .get("http://3.106.220.39:8080/api/leave-types")
@@ -38,7 +38,7 @@ const LeaveRequest = () => {
       .catch((err) => console.error("Error fetching leave types:", err));
   }, []);
 
-  // ✅ Fetch all leave requests (for logged-in user)
+  //  Fetch all leave requests (for logged-in user)
   useEffect(() => {
     if (!userId) return; // safety check
     axios
@@ -47,7 +47,7 @@ const LeaveRequest = () => {
       .catch((err) => console.error("Error fetching leave requests:", err));
   }, [userId]);
 
-  // ✅ Handle form submit
+  //  Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
 

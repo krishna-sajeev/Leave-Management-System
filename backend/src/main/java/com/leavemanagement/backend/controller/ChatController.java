@@ -17,7 +17,7 @@ public class ChatController {
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
 
-    private static final String BASE_URL = "http://localhost:8080/api/";
+    private static final String BASE_URL = "http://172.17.0.1:8080/api/";
 
     private final RestTemplate restTemplate = new RestTemplate();
 

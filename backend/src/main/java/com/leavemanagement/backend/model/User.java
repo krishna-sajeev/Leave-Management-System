@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 import javax.xml.crypto.Data;
 import java.time.LocalDate;
-import java.util.Date;
+import jakarta.validation.constraints.*;
 
 @Entity
 public class User {
@@ -23,8 +23,18 @@ public class User {
 
     private String email;
 
-    private String  mobileNumber;
+    @Pattern(
+            regexp = "^[6-9]\\d{9}$",
+            message = "Mobile number must be 10 digits and start with 6, 7, 8, or 9"
+    )
+    private String mobileNumber;
 
+    @NotBlank(message = "Password cannot be empty")
+    @Size(min = 8, max = 20, message = "Password must be 8–20 characters long")
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
+            message = "Password must contain uppercase, lowercase, number, and special character"
+    )
     @Column(name = "password")
     private String password;
 
